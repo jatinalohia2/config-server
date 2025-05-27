@@ -1,1 +1,48 @@
+spring.application.name: order-service
 
+jwt:
+  secret: jbdgasdgasdgasudgaosdgaodgaosdgasdfdsfsfsddoiasgdoaisdhoadoasdasda
+
+management:
+  health:
+    circuitbreaker:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"       # ✅ Expose all actuator endpoints (e.g., /health, /metrics, /info, /circuitbreakers)
+        # ⚠️ Not recommended for production. Use specific ones like: health,info
+  endpoint:
+    health:
+      show-details: always # ✅ Always show full health details (disk, DB, circuit breakers, etc.) in /actuator/health
+      # Other options: 'never', 'when-authorized'
+
+
+
+resilience4j:
+#  retry:                         # Start of retry mechanism configuration
+#    instances:                   # Define multiple retry configurations (instances)
+#      inventoryRetry:            # Name of the retry instance (you'll use this in your code)
+#        maxRetryAttempts: 3      # Total number of retry attempts (1 original + 2 retries = 3 total)
+#        maxDuration: 2s          # Maximum duration to wait between retries (here, 2 seconds)
+
+
+  ratelimiter: # Start of rate limiter configuration
+    instances: # Define multiple rate limiter configurations
+      inventoryRateLimiter: # Name of the rate limiter instance (used in code)
+        limit-refresh-period: 5s      # After every 10 seconds, counter will reset
+        limit-for-period: 1            # Max 5 calls allowed per refresh period
+        timeout-duration: 0s          # W
+
+
+  circuitbreaker: # Main config block for circuit breakers
+    instances:
+      inventoryCircuitBreaker: # Unique name for the circuit breaker instance
+        registerHealthIndicator: true         # Enables health check for this circuit breaker
+        slidingWindowType: COUNT_BASED        # Count-based or time-based window (COUNT or TIME)
+        slidingWindowSize: 10                 # Total number of calls in the window
+        minimumNumberOfCalls: 5               # Minimum calls before calculating failure rate
+        failureRateThreshold: 50              # % of failures to trigger OPEN state (e.g., 50%)
+        waitDurationInOpenState: 10s          # Wait time before transitioning to HALF-OPEN
+        permittedNumberOfCallsInHalfOpenState: 3  # Allowed calls to test in HALF-OPEN
+        automaticTransitionFromOpenToHalfOpenEnabled: true  # Auto transition from OPEN to HALF-OPEN
